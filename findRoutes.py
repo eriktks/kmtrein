@@ -81,7 +81,7 @@ def readTransfers():
 def readTimeDistance():
     timeDistance = {}
     try: inFile = open(TIMEDISTANCEFILE,"r")
-    except: sys.exit(COMMAND+": cannot read file "+TIMEDISTANCEFILE+"\n")
+    except: return(timeDistance)
     patternHashStart = re.compile("^#")
     for line in inFile:
         line = line.rstrip()
