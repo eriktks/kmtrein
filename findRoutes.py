@@ -62,9 +62,9 @@ def readStations():
 
 # read minimal tranfer times
 def readTransfers():
-    try: inFile = open(TRANSFERSFILE,"r")
-    except: sys.exit(COMMAND+": cannot read file "+TRANSFERSFILE+"\n")
     tranfers = {}
+    try: inFile = open(TRANSFERSFILE,"r")
+    except: return(transfers) 
     for line in inFile:
         line = line.rstrip()
         fields = line.split()
@@ -298,6 +298,8 @@ def findRoute(index,route,travelled,distance):
                     waitingTime = minutes2time(time2minutes(startTime)-time2minutes(STARTTIME))
                     maxTime = computeMaxTime(startTime)
                     findRoute(index,[{"startStation":startStation,"endStation":endStation,"startTime":startTime,"endTime":endTime,"distance":index[key][startStation][endStation]["distance"],"averageSpeed":averageSpeed,"waitingTime":waitingTime,"lessThanBest":0.0}],{startStation+" "+endStation:True},distance)
+                # store new time-distance data for this start station
+                writeTimeDistance(timeDistance)
     # continue a route
     else:
         prevStartStation = route[-1]["startStation"]
@@ -392,7 +394,8 @@ def showSpeeds(index):
 def readPartners():
     partners = {}
     patternHashStart = re.compile("^#")
-    inFile = open(PARTNERFILE,"r")
+    try: inFile = open(PARTNERFILE,"r")
+    except: sys.exit(COMMAND+": cannot read file "+PARTNETFILE+"\n")
     for line in inFile:
         line = line.rstrip()
         if patternHashStart.match(line): continue
@@ -418,6 +421,7 @@ maxTime = minutes2time(time2minutes(DAYTIME)-time2minutes(MAXTIMERESERVE))
 stations = readStations()
 transfers = readTransfers()
 options,args = getopt.getopt(sys.argv,"b:f:h:nst:")
+if len(args) > 0: sys.exit(COMMAND+": unexpected extra argument: "+args[0])
 for option,value in options:
     if option == "-b": beamSize = float(value)
     elif option == "-f": firstStation = value
