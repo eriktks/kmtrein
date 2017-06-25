@@ -1,12 +1,13 @@
 # kmtrein
 
 This is a Python script written by Erik Tjong Kim Sang for
-his participation in the 2017 competition kmtrein. The
-object of the competition was to cover as many kilometers by
-train travelling in The Netherlands on Saturday 24 June
-2017. The script computes the longest possible route, given
-the train schedule for intercity trains and a certain
-conditions.
+his participation in the 2017 competition
+[kmtrein](http://www.treinreiziger.nl/inschrijving-kilometer-kampioen-2017-gestart/).
+The object of the competition was to cover as many
+kilometers by train traveling in The Netherlands on Saturday
+24 June 2017. The script computes the longest possible
+route, given the train schedule for intercity trains and a
+certain conditions.
 
 ## Installation
 
@@ -14,10 +15,10 @@ This is a Python script which runs on Apple Macs and Linux
 machine. If you want to run it on Microsoft Windows, you
 should check if you have
 [Python](https://en.wikipedia.org/wiki/Python_(programming_language))
-Python on your computer and install it on your system.
+on your computer and install it on your system.
 
 You can download the program and its five data files one by
-one (copy and paste from raw view mode at the website) or
+one (copy and paste from raw view mode at this website) or
 all at once with software git which is associated with the
 website [github.com](http://github.com). Run the following
 on the command line (in a terminal window):
@@ -26,7 +27,7 @@ on the command line (in a terminal window):
 git clone http://github.com/eriktks/kmtrein
 ```
 
-This will create a directory kmtrain in the current folder
+This will create a directory kmtrein in the current folder
 where you can find the program and its data files
 
 ## Running the program
@@ -38,20 +39,21 @@ program will determine how long the routes are that you will
 find.
 
 Let's start with looking for a new route. We want to start in
-Groningen so we tell that to the program: our first station
-is Groningen:
+Groningen so we tell that to the program: our first station is
+Groningen (-f groningen) and we are looking for a new route (-n):
 
 ```
 ./findRoutes.py -n -f groningen < traintrips.txt
 ```
 
-Note the program knows all station names written in lower
-case characters and without punctuation. So 's Hertogenbosch
-becomes shertogenbosch. The option -f signals that the next
-word is the first station. The file traintrips.txt contain
-the time schedule (dienstregeling in Dutch). The option -n
-signals that this is a new route and that no use should be
-made of previously computed route information.
+Observe that the program knows all station names written in
+lower case characters and without punctuation. So 's
+Hertogenbosch becomes shertogenbosch. The option -f signals
+that the next word is the first station. The file
+traintrips.txt contains the time schedule (dienstregeling in
+Dutch). The option -n signals that this is a new route and
+that no use should be made of previously computed route
+information.
 
 The program outputs the different routes that it finds with
 the longest at the bottom:
@@ -76,12 +78,13 @@ is 0.0 km.*
 
 Checking all possible train routes in The Netherlands would
 take a very very long time. The program uses a technique
-called *beam search* for finding the longest route in a
-reasoble time. At each point of the day, it only looks at
+called beam search for finding the longest route in a
+reasonable time. At each point of the day, it only looks at
 routes that are within a certain distance (the beam) of the
-longest route known. By doing this, the program can find a
-longg route quickly but it will miss many possible routes
-that only cover few kilometers early in the day.
+longest route known up until that point of the day. By doing
+this, the program can find a long route quickly but it will
+miss longer routes that only cover few kilometers early in
+the day.
 
 If you want the program to find a longer route, you can ask
 it to examine more route by increasing its beam size. But
@@ -95,24 +98,24 @@ option -b:
 # largest distance : 1925.2
 ```
 
-Execellent, now we get a longer route. Try other beam sizes
+Excellent, now we get a longer route. Try other beam sizes
 and see what you get. You will notice that the program is
 responding more slowly as the beam size increases. But
 hopefully you will be rewarded with longer routes.
 
-## Travelabiliy
+## Travelability
 
 **Always check the routes suggested by  the program for
 travelability!** It might suggest you a transfer at station
 Utrecht Centraal from platform 1 to platform 22 in zero
-minutes, which is a bit hard.
+minutes, which is a bit hard to realize.
 
-You can define minimum transfer times in the file transfers.
-The file contains lines with on them: a time (in minutes)
-and four stations: the station from which you left, the
-transfer station (twice) and the target station. Optionally
-these are followed by the arrival time at the transfer
-station. So;
+You can define minimum transfer times in the file
+*transfers*.  The file contains lines with the format: time
+(in minutes) and the four stations: the station from which you
+left, the transfer station (twice) and the target station.
+Optionally these are followed by the arrival time at the
+transfer station. So;
 
 ```
 00:04 amersfoort utrechtcentraal utrechtcentraal arnhem
@@ -126,24 +129,25 @@ I have used conservative minimum transfer times for
 transfers that included a platform change: four minutes at
 large stations and three minutes at small ones. If you think
 you can manage two-minute changes, you should change the
-file transfers. Your reward will be longer routes but the
+file *transfers*. Your reward will be longer routes but the
 risk that you might miss a train connection will increase.
 
 ## Using this software in another edition
 
 If you want to use this software for another edition of this
-competition you will need to update train schedule. I
-obtained the train schedule from the website
-[rijdendetreinen.nl](https://www.rijdendetreinen.nl/reisplanner).
-The track lengths were found on
+competition you will need to update train schedule stored in
+the file *traintrips.txt*. I obtained the train schedule
+from the website
+[rijdendetreinen.nl](https://www.rijdendetreinen.nl/reisplanner),
+by copy-and-paste.  The track lengths were found on
 [wiskunde123.nl](http://www.wiskunde123.nl/treingraaf/).
 
 For other editions you also want to change the file
-transfers to your needs (see previous section). You might
-want to update the file stations, which currently contains
+*transfers* to your needs (see previous section). You might
+want to update the file *stations*, which currently contains
 only a subset of the intercity stations. Examining the
-partner file could also be useful: it contains the railway
+*partners* file could also be useful: it contains the railway
 sections which overlap and it is incomplete. The file
-time-distance contains the longest distances per time of the
+*time-distance* contains the longest distances per time of the
 day and can be left alone.
 
