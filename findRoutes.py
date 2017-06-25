@@ -37,7 +37,7 @@ TIMEDISTANCEFILE = "time-distance" # best distance covered per time of earlier r
 
 # variables modifiable by arguments 
 maxTime = DAYTIME
-beamSize = 60
+beamSize = 20
 historyFile = ""
 firstStation = ""
 doShowSpeeds = False
