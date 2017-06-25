@@ -8,13 +8,26 @@ train travelling in The Netherlands on Saturday 24 June
 the train schedule for intercity trains and a certain
 conditions.
 
-## Platform
+## Installation
 
 This is a Python script which runs on Apple Macs and Linux
 machine. If you want to run it on Microsoft Windows, you
 should check if you have
 [Python](https://en.wikipedia.org/wiki/Python_(programming_language))
 Python on your computer and install it on your system.
+
+You can download the program and its five data files one by
+one (copy and paste from raw view mode at the website) or
+all at once with software git which is associated with the
+website [github.com](http://github.com). Run the following
+on the command line (in a terminal window):
+
+```
+git clone http://github.com/eriktks/kmtrein
+```
+
+This will create a directory kmtrain in the current folder
+where you can find the program and its data files
 
 ## Running the program
 
