@@ -46,14 +46,13 @@ Groningen (-f groningen) and we are looking for a new route (-n):
 ./findRoutes.py -n -f groningen < traintrips.txt
 ```
 
-Observe that the program knows all station names written in
-lower case characters and without punctuation. So 's
-Hertogenbosch becomes shertogenbosch. The option -f signals
-that the next word is the first station. The file
-traintrips.txt contains the time schedule (dienstregeling in
-Dutch). The option -n signals that this is a new route and
-that no use should be made of previously computed route
-information.
+The program prefers all station names to be written in lower
+case and without punctuation. So 's Hertogenbosch becomes
+shertogenbosch. The option -f signals that the next word is
+the first station. The file traintrips.txt contains the time
+schedule (dienstregeling in Dutch). The option -n signals
+that this is a new route and that no use should be made of
+previously computed route information.
 
 The program outputs the different routes that it finds with
 the longest at the bottom:
@@ -106,7 +105,7 @@ hopefully you will be rewarded with longer routes.
 ## Travelability
 
 **Always check the routes suggested by  the program for
-travelability!** It might suggest you a transfer at station
+travelability!** It might suggest a transfer at station
 Utrecht Centraal from platform 1 to platform 22 in zero
 minutes, which is a bit hard to realize.
 
