@@ -1,16 +1,18 @@
 #!/usr/bin/python -W all
 """
    findRoutes.py: find longest rout with an index of the available train rides
-   usage: findRoutes.py [-t time] [-h historyFile] [-f firstStation] [-u] [-s] < traintrips.txt
+   usage: findRoutes.py [-b beam-size] [-f firstStation] [-h] [-H history-file] [-n] [-s time] [-S] < traintrips.txt
    note: expected input line formats: 
    1. hash sign distance start-station end-station
    2. (often on 4 separate lines) start-time end-time transfers travel-time
-   -t time: final time of complete journey
-   -h historyFile: file with partial journey; like format:
-      startTime endTime waitingTime distance speed startStation endStation
-   -u: use data from previous runs as comparison
-   -s: show the speeds of the various trips
+   -b: beam size
    -f: first station: start all routes here
+   -h: show help message and exit
+   -H history-file: file with partial journey; like output format:
+      startTime endTime waitingTime distance speed startStation endStation
+   -n: create new route/delete old route information
+   -s: start time of search, format: HH:MM (hours and minutes)
+   -S: show the speeds of the various trips
    20170617 erikt(at)xs4all.nl developed for my 2017 kmkampioen participation
 """
 
@@ -20,7 +22,6 @@ import sys
 
 # constants
 COMMAND = sys.argv.pop(0)
-STARTTIME = "00:00" # start the journey at this time (or a little bit later)
 DAYTIME = "24:00" # length of competition
 MAXWAIT = "00:59" # do not stay at any station longer than this
 MINRETURNWAITINGTIME = "00:03" # need at least 3 minutes to catch train back
@@ -34,12 +35,21 @@ PARTNERFILE="partners" # tracks with overlapping parts
 STATIONSFILE="stations" # list of station names
 TRANSFERSFILE="transfers" # minimum required time per transfer
 TIMEDISTANCEFILE = "time-distance" # best distance covered per time of earlier runs
+HELP="""usage: findRoutes.py [-b beam-size] [-f firstStation] [-h] [-H history-file] [-n] [-s time] [-S] < traintrips.txt
+-b: beam size
+-f: first station: start all routes here
+-h: show help message and exit
+-H history-file: file with partial journey; like output format:
+   startTime endTime waitingTime distance speed startStation endStation
+-n: create new route/delete old route information
+-s: start time of search, format: HH:MM (hours and minutes)
+-S: show the speeds of the various trips"""
 
 # variables modifiable by arguments 
-maxTime = DAYTIME
 beamSize = 20
 historyFile = ""
 firstStation = ""
+globalStartTime = "00:00" # start the journey at this time (or a little bit later)
 doShowSpeeds = False
 resetBestDistances = False
 # internal variables
@@ -50,6 +60,10 @@ transfers = {}
 trainTrips = []
 maxDistance = 0
 timeDistance = {}
+
+def help():
+    print HELP
+    sys.exit()
 
 def readStations():
     try: inFile = open(STATIONSFILE,"r")
@@ -195,7 +209,7 @@ def computeTimes(startTime,waitingTime):
     for minutes in range(startMinutes-waitingMinutes,startMinutes+1):
         if minutes >= 0:
             time = minutes2time(minutes)
-            if time >= STARTTIME: times.append(time)
+            if time >= globalStartTime: times.append(time)
     return(times)
     
 def makeIndex(trainTrips,transfers):
@@ -209,7 +223,7 @@ def makeIndex(trainTrips,transfers):
         index[key][trainTrips[i]["startStation"]] = {}
         # we need follow-up routes for any station we can start the day
         if trainTrips[i]["startTime"] <= MAXWAIT:
-            key = trainTrips[i]["endStation"]+" "+STARTTIME
+            key = trainTrips[i]["endStation"]+" "+globalStartTime
             if not key in index: index[key] = {}
             # no start station: use the end station as start staion
             index[key][trainTrips[i]["endStation"]] = {}
@@ -289,13 +303,13 @@ def findRoute(index,route,travelled,distance):
             if len(fields) < 2: 
                 sys.exit(COMMAND+": incorrect key in index: "+key+"\n")
             startStation = fields[0]
-            if fields[1] == STARTTIME:
+            if fields[1] == globalStartTime:
                 for endStation in index[key][startStation]:
                     startTime = index[key][startStation][endStation]["startTime"]
                     endTime = index[key][startStation][endStation]["endTime"]
                     distance = index[key][startStation][endStation]["distance"]
                     averageSpeed = index[key][startStation][endStation]["averageSpeed"]
-                    waitingTime = minutes2time(time2minutes(startTime)-time2minutes(STARTTIME))
+                    waitingTime = minutes2time(time2minutes(startTime)-time2minutes("00:00"))
                     maxTime = computeMaxTime(startTime)
                     findRoute(index,[{"startStation":startStation,"endStation":endStation,"startTime":startTime,"endTime":endTime,"distance":index[key][startStation][endStation]["distance"],"averageSpeed":averageSpeed,"waitingTime":waitingTime,"lessThanBest":0.0}],{startStation+" "+endStation:True},distance)
                 # store new time-distance data for this start station
@@ -417,21 +431,25 @@ def readPartners():
     inFile.close()
     return(partners)
 
-maxTime = minutes2time(time2minutes(DAYTIME)-time2minutes(MAXTIMERESERVE))
 stations = readStations()
-transfers = readTransfers()
-options,args = getopt.getopt(sys.argv,"b:f:h:nst:")
+options,args = getopt.getopt(sys.argv,"b:f:hH:ns:S")
 if len(args) > 0: sys.exit(COMMAND+": unexpected extra argument: "+args[0])
 for option,value in options:
     if option == "-b": beamSize = float(value)
     elif option == "-f": firstStation = value
-    elif option == "-h": historyFile = value
+    elif option == "-h": help()
+    elif option == "-H": historyFile = value
     elif option == "-n": resetBestDistances = True
-    elif option == "-s": doShowSpeeds = True
-    elif option == "-t": maxTime = value
+    elif option == "-s": globalStartTime = value
+    elif option == "-S": doShowSpeeds = True
 if firstStation != "" and not firstStation in stations:
     sys.exit(COMMAND+": unknown first station: "+firstStation+"\n")
+patternTime = re.compile("^\d\d:\d\d$")
+if not patternTime.match(globalStartTime):
+    sys.exit(COMMAND+": unexpected start time argument value for -s: "+globalStartTime+"\n")
 
+maxTime = minutes2time(time2minutes(DAYTIME)-time2minutes(MAXTIMERESERVE)) # needs 2 functions to be predefined
+transfers = readTransfers()
 if not resetBestDistances: timeDistance = readTimeDistance()
 trainTrips = readTrainTrips()
 index = makeIndex(trainTrips,transfers)
@@ -444,7 +462,7 @@ if historyFile == "":
     if firstStation == "": findRoute(index,[],{},0)
     # start with a dummy trip from and to the specified first station
     else: 
-       findRoute(index,[{"startStation":firstStation,"endStation":firstStation,"startTime":STARTTIME,"endTime":STARTTIME,"distance":0.0,"averageSpeed":0.0,"waitingTime":"00:00","lessThanBest":0.0}],{},0)
+       findRoute(index,[{"startStation":firstStation,"endStation":firstStation,"startTime":globalStartTime,"endTime":globalStartTime,"distance":0.0,"averageSpeed":0.0,"waitingTime":"00:00","lessThanBest":0.0}],{},0)
 else:
     readRouteResults = readRoute(historyFile)
     findRoute(index,readRouteResults["route"],readRouteResults["travelled"],readRouteResults["distance"])
