@@ -24,6 +24,7 @@ import sys
 COMMAND = sys.argv.pop(0)
 DAYTIME = "24:00" # length of competition
 MAXWAIT = "00:59" # do not stay at any station longer than this
+TIMEZERO = "00:00"
 MINRETURNWAITINGTIME = "00:03" # need at least 3 minutes to catch train back
 CENTERNAME = "utrechtcentraal" # visit this station...
 CENTERSTARTTIME = "10:00" # between this time and...
@@ -49,7 +50,7 @@ HELP="""usage: findRoutes.py [-b beam-size] [-f firstStation] [-h] [-H history-f
 beamSize = 20
 historyFile = ""
 firstStation = ""
-globalStartTime = "00:00" # start the journey at this time (or a little bit later)
+globalStartTime = TIMEZERO # start the journey at this time (or a little bit later)
 doShowSpeeds = False
 resetBestDistances = False
 # internal variables
@@ -244,7 +245,7 @@ def makeIndex(trainTrips,transfers):
                     waitingTime = minutes2time(time2minutes(trainTrips[i]["startTime"])-time2minutes(time)) 
                     nextTrip = {"startTime":trainTrips[i]["startTime"],"endTime":trainTrips[i]["endTime"],"distance":trainTrips[i]["distance"],"averageSpeed":trainTrips[i]["averageSpeed"]}
                     # collect all relevant trips for the start of the route
-                    if time == globalStartTime:
+                    if time == TIMEZERO:
                         if not endStation in index[key][prevStartStation]: index[key][prevStartStation][endStation] = []
                         index[key][prevStartStation][endStation].append(nextTrip)
                     # for continuing a route, just keep the best time for each destination; consider the minimal transfer times
@@ -315,12 +316,13 @@ def findRoute(index,route,travelled,distance):
                 for endStation in index[key][startStation]:
                     for i in range(0,len(index[key][startStation][endStation])):
                         startTime = index[key][startStation][endStation][i]["startTime"]
-                        endTime = index[key][startStation][endStation][i]["endTime"]
-                        distance = index[key][startStation][endStation][i]["distance"]
-                        averageSpeed = index[key][startStation][endStation][i]["averageSpeed"]
-                        waitingTime = minutes2time(time2minutes(startTime)-time2minutes("00:00"))
-                        maxTime = computeMaxTime(startTime)
-                        findRoute(index,[{"startStation":startStation,"endStation":endStation,"startTime":startTime,"endTime":endTime,"distance":distance,"averageSpeed":averageSpeed,"waitingTime":waitingTime,"lessThanBest":0.0}],{startStation+" "+endStation:True},distance)
+                        if globalStartTime == TIMEZERO or startTime == globalStartTime:
+                            endTime = index[key][startStation][endStation][i]["endTime"]
+                            distance = index[key][startStation][endStation][i]["distance"]
+                            averageSpeed = index[key][startStation][endStation][i]["averageSpeed"]
+                            waitingTime = minutes2time(time2minutes(startTime)-time2minutes("00:00"))
+                            maxTime = computeMaxTime(startTime)
+                            findRoute(index,[{"startStation":startStation,"endStation":endStation,"startTime":startTime,"endTime":endTime,"distance":distance,"averageSpeed":averageSpeed,"waitingTime":waitingTime,"lessThanBest":0.0}],{startStation+" "+endStation:True},distance)
                     # store new time-distance data for this start station
                     writeTimeDistance(timeDistance)
     # continue a route
