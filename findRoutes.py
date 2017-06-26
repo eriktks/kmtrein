@@ -1,6 +1,6 @@
 #!/usr/bin/python -W all
 """
-   findRoutes.py: find longest rout with an index of the available train rides
+   findRoutes.py: find longest route with an index of the available train rides
    usage: findRoutes.py [-b beam-size] [-f firstStation] [-h] [-H history-file] [-n] [-s time] [-S] < traintrips.txt
    note: expected input line formats: 
    1. hash sign distance start-station end-station
@@ -101,22 +101,23 @@ def readTimeDistance():
         line = line.rstrip()
         if patternHashStart.match(line): continue
         fields = line.split()
-        if len(fields) != 3: sys.exit(COMMAND+": unexpected line in file "+TIMEDISTANCEFILE+": "+line+"\n")
-        station,time,distance = fields
-        timeDistance[station+" "+time] = float(distance)
+        if len(fields) == 3: return({}) # old format
+        if len(fields) != 4: sys.exit(COMMAND+": unexpected line in file "+TIMEDISTANCEFILE+": "+line+"\n")
+        station,startTime,time,distance = fields
+        timeDistance[station+" "+startTime+" "+time] = float(distance)
     return(timeDistance)
 
 # write time-distance file
 def writeTimeDistance(timeDistance):
     try: outFile = open(TIMEDISTANCEFILE,"w")
     except: sys.exit(COMMAND+": cannot write file "+TIMEDISTANCEFILE+"\n")
-    startOfRoutes = {}
+    startStationsTimes = {}
     for keyTD in timeDistance:
         fields = keyTD.split()
-        if len(fields) != 2: sys.exit(COMMAND+": invalid time-distance key: "+keyTD+"\n")
-        station,time = keyTD.split()
-        startOfRoutes[station] = True
-    for startOfRoute in startOfRoutes:
+        if len(fields) != 3: sys.exit(COMMAND+": invalid time-distance key: "+keyTD+"\n")
+        station,startTime,time = keyTD.split()
+        startStationsTimes[station+" "+startTime] = True
+    for stationTime in startStationsTimes:
         lastDistance = 0
         for hour in range(0,25):
             if hour < 10: hour = "0"+str(hour)
@@ -125,7 +126,7 @@ def writeTimeDistance(timeDistance):
                 if minute < 10: minute = "0"+str(minute)
                 else: minute = str(minute)
                 thisTime = hour+":"+minute
-                keyTD = startOfRoute+" "+thisTime
+                keyTD = stationTime+" "+thisTime
                 if not keyTD in timeDistance or timeDistance[keyTD] <= lastDistance:
                     outFile.write(keyTD+" "+str(lastDistance)+"\n")
                 else:
@@ -241,12 +242,19 @@ def makeIndex(trainTrips,transfers):
                     trackPair = prevStartStation+" "+startStation+" "+startStation+" "+endStation
                     trackPairTime = trackPair+" "+time
                     waitingTime = minutes2time(time2minutes(trainTrips[i]["startTime"])-time2minutes(time)) 
-                    if (not trainTrips[i]["endStation"] in index[key][prevStartStation] or \
-                        trainTrips[i]["endTime"] < index[key][prevStartStation][trainTrips[i]["endStation"]]["endTime"]) and \
+                    nextTrip = {"startTime":trainTrips[i]["startTime"],"endTime":trainTrips[i]["endTime"],"distance":trainTrips[i]["distance"],"averageSpeed":trainTrips[i]["averageSpeed"]}
+                    # collect all relevant trips for the start of the route
+                    if time == globalStartTime:
+                        if not endStation in index[key][prevStartStation]: index[key][prevStartStation][endStation] = []
+                        index[key][prevStartStation][endStation].append(nextTrip)
+                    # for continuing a route, just keep the best time for each destination; consider the minimal transfer times
+                    elif (not endStation in index[key][prevStartStation] or \
+                        trainTrips[i]["endTime"] < index[key][prevStartStation][endStation][0]["endTime"]) and \
                        (prevStartStation != endStation or waitingTime >= MINRETURNWAITINGTIME) and \
                        (not trackPair in transfers or waitingTime >= transfers[trackPair]) and \
                        (not trackPairTime in transfers or waitingTime >= transfers[trackPairTime]):
-                        index[key][prevStartStation][trainTrips[i]["endStation"]] = {"startTime":trainTrips[i]["startTime"],"endTime":trainTrips[i]["endTime"],"distance":trainTrips[i]["distance"],"averageSpeed":trainTrips[i]["averageSpeed"]}
+                        if not endStation in index[key][prevStartStation]: index[key][prevStartStation][endStation] = [nextTrip]
+                        else: index[key][prevStartStation][endStation][0] = nextTrip
     return(index)
 
 def centerVisited(route):
@@ -269,7 +277,7 @@ def computeMaxTime(startTime):
     minutes = time2minutes(startTime)+time2minutes("24:00")-time2minutes(MAXTIMERESERVE)
     return(minutes2time(minutes))
 
-def fillTimeDistance(startStation,endTime,distance):
+def fillTimeDistance(startStation,startTime,endTime,distance):
     global timeDistance
 
     for hour in range(0,25):
@@ -280,7 +288,7 @@ def fillTimeDistance(startStation,endTime,distance):
             else: minute = str(minute)
             thisTime = hour+":"+minute
             if thisTime > endTime:
-                keyTD = startStation+" "+thisTime
+                keyTD = startStation+" "+startTime+" "+thisTime
                 if not keyTD in timeDistance or timeDistance[keyTD] <= distance: timeDistance[keyTD] = distance
                 else: return()
 
@@ -292,10 +300,10 @@ def findRoute(index,route,travelled,distance):
             maxDistance = distance
             printRoute(route)
             print "# largest distance : %0.1f" % (maxDistance)
-        keyTD = route[0]["startStation"]+" "+route[-1]["endTime"]
+        keyTD = route[0]["startStation"]+" "+route[0]["startTime"]+" "+route[-1]["endTime"]
         if keyTD not in timeDistance or timeDistance[keyTD] < distance:
             timeDistance[keyTD] = distance
-            fillTimeDistance(route[0]["startStation"],route[-1]["endTime"],distance)
+            fillTimeDistance(route[0]["startStation"],route[0]["startTime"],route[-1]["endTime"],distance)
     # start of route: check all stations at start time
     if len(route) == 0:
         for key in index:
@@ -303,17 +311,18 @@ def findRoute(index,route,travelled,distance):
             if len(fields) < 2: 
                 sys.exit(COMMAND+": incorrect key in index: "+key+"\n")
             startStation = fields[0]
-            if fields[1] == globalStartTime:
+            if fields[1] == globalStartTime and (firstStation == "" or startStation == firstStation):
                 for endStation in index[key][startStation]:
-                    startTime = index[key][startStation][endStation]["startTime"]
-                    endTime = index[key][startStation][endStation]["endTime"]
-                    distance = index[key][startStation][endStation]["distance"]
-                    averageSpeed = index[key][startStation][endStation]["averageSpeed"]
-                    waitingTime = minutes2time(time2minutes(startTime)-time2minutes("00:00"))
-                    maxTime = computeMaxTime(startTime)
-                    findRoute(index,[{"startStation":startStation,"endStation":endStation,"startTime":startTime,"endTime":endTime,"distance":index[key][startStation][endStation]["distance"],"averageSpeed":averageSpeed,"waitingTime":waitingTime,"lessThanBest":0.0}],{startStation+" "+endStation:True},distance)
-                # store new time-distance data for this start station
-                writeTimeDistance(timeDistance)
+                    for i in range(0,len(index[key][startStation][endStation])):
+                        startTime = index[key][startStation][endStation][i]["startTime"]
+                        endTime = index[key][startStation][endStation][i]["endTime"]
+                        distance = index[key][startStation][endStation][i]["distance"]
+                        averageSpeed = index[key][startStation][endStation][i]["averageSpeed"]
+                        waitingTime = minutes2time(time2minutes(startTime)-time2minutes("00:00"))
+                        maxTime = computeMaxTime(startTime)
+                        findRoute(index,[{"startStation":startStation,"endStation":endStation,"startTime":startTime,"endTime":endTime,"distance":distance,"averageSpeed":averageSpeed,"waitingTime":waitingTime,"lessThanBest":0.0}],{startStation+" "+endStation:True},distance)
+                    # store new time-distance data for this start station
+                    writeTimeDistance(timeDistance)
     # continue a route
     else:
         prevStartStation = route[-1]["startStation"]
@@ -322,9 +331,9 @@ def findRoute(index,route,travelled,distance):
         key = startStation+" "+time
         for endStation in index[key][prevStartStation]:
             track = startStation+" "+endStation
-            endTime = index[key][prevStartStation][endStation]["endTime"]
+            endTime = index[key][prevStartStation][endStation][0]["endTime"]
             if track not in travelled and endTime <= maxTime:
-                startTime = index[key][prevStartStation][endStation]["startTime"]
+                startTime = index[key][prevStartStation][endStation][0]["startTime"]
                 if len(route) == 1 and route[-1]["distance"] == 0.0:
                     maxTime = computeMaxTime(startTime)
                 waitingTime = minutes2time(time2minutes(startTime)-time2minutes(route[-1]["endTime"]))
@@ -333,14 +342,14 @@ def findRoute(index,route,travelled,distance):
                     travelled[track] = True
                     lastTrackPair = route[-1]["startStation"]+" "+route[-1]["endStation"]+" "+track
                     lastTrackPairEndTime = lastTrackPair+" "+time
-                    thisDistance = index[key][prevStartStation][endStation]["distance"]
+                    thisDistance = index[key][prevStartStation][endStation][0]["distance"]
                     if track in partners:
                         for i in range(0,len(partners[track])):
                             if partners[track][i]["partner"] in travelled:
                                 thisDistance -= partners[track][i]["distance"]
                     distance += thisDistance
-                    averageSpeed = index[key][prevStartStation][endStation]["averageSpeed"]
-                    keyTD = route[0]["startStation"]+" "+endTime
+                    averageSpeed = index[key][prevStartStation][endStation][0]["averageSpeed"]
+                    keyTD = route[0]["startStation"]+" "+route[0]["startTime"]+" "+endTime
                     lessThanBest = 0.0
                     if keyTD in timeDistance: lessThanBest = timeDistance[keyTD]-distance
                     route.append({"startStation":startStation,"endStation":endStation,"startTime":startTime,"endTime":endTime,"distance":thisDistance,"averageSpeed":averageSpeed,"waitingTime":waitingTime,"lessThanBest":lessThanBest})
@@ -399,7 +408,7 @@ def showSpeeds(index):
             for endStation in index[key1][prevStartStation]:
                 key2 = startStation+" "+endStation
                 if not key2 in speeds: speeds[key2] = {}
-                speeds[key2][int(index[key1][prevStartStation][endStation]["averageSpeed"])] = True
+                speeds[key2][int(index[key1][prevStartStation][endStation][0]["averageSpeed"])] = True
     for key2 in speeds:
         for speed in sorted(speeds[key2],reverse=True): sys.stdout.write(str(speed)+" ")
         print key2
@@ -459,10 +468,7 @@ if doShowSpeeds:
     sys.exit()
    
 if historyFile == "": 
-    if firstStation == "": findRoute(index,[],{},0)
-    # start with a dummy trip from and to the specified first station
-    else: 
-       findRoute(index,[{"startStation":firstStation,"endStation":firstStation,"startTime":globalStartTime,"endTime":globalStartTime,"distance":0.0,"averageSpeed":0.0,"waitingTime":"00:00","lessThanBest":0.0}],{},0)
+    findRoute(index,[],{},0)
 else:
     readRouteResults = readRoute(historyFile)
     findRoute(index,readRouteResults["route"],readRouteResults["travelled"],readRouteResults["distance"])
