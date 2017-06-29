@@ -258,7 +258,7 @@ def makeIndex(trainTrips,transfers):
 
 def centerVisited(route):
     if len(route) == 0: return(True)
-    if route[-1]["endTime"] < CENTERENDTIME: return(True)
+    if route[-1]["endTime"] < CENTERENDTIME or ignoreTransferSafetyTimes: return(True)
     for i in range(1,len(route)):
         # did we arrive at the center station in the time frame, waitin 5 mins
         if route[i]["startStation"] == CENTERNAME and route[i]["waitingTime"] >= CENTERWAITTIME and \
@@ -273,7 +273,8 @@ def printRoute(route):
 
 # compute the maximum (end) time for a given start time
 def computeMaxTime(startTime):
-    minutes = time2minutes(startTime)+time2minutes("24:00")-time2minutes(MAXTIMERESERVE)
+    minutes = time2minutes(startTime)+time2minutes("24:00")
+    if not ignoreTransferSafetyTimes: minutes -= time2minutes(MAXTIMERESERVE)
     return(minutes2time(minutes))
 
 def fillTimeDistance(startStation,startTime,endTime,distance):
@@ -443,7 +444,8 @@ for option,value in options:
     elif option == "-f": firstStation = value
     elif option == "-h": help()
     elif option == "-H": historyFile = value
-    elif option == "-i": ignoreTransferSafetyTimes = True
+    elif option == "-i": 
+       ignoreTransferSafetyTimes = True
     elif option == "-n": resetBestDistances = True
     elif option == "-s": globalStartTime = value
     elif option == "-S": doShowSpeeds = True
@@ -453,7 +455,7 @@ patternTime = re.compile("^\d\d:\d\d$")
 if not patternTime.match(globalStartTime):
     sys.exit(COMMAND+": unexpected start time argument value for -s: "+globalStartTime+"\n")
 
-maxTime = minutes2time(time2minutes(DAYTIME)-time2minutes(MAXTIMERESERVE)) # needs 2 functions to be predefined
+maxTime = computeMaxTime(globalStartTime) # needs function to be computed
 if not resetBestDistances: timeDistance = readTimeDistance()
 trainTrips = readTrainTrips()
 transfers = readTransfers()

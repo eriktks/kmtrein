@@ -125,18 +125,19 @@ Note that this time we continue search for a route so we do
 not use option -n here. Next, you run the program with beam
 sizes 20, 30, 40 and so on until it takes too much time.
 
-After this look for the time 25:00 in the file time-distance
-to find out the best stations and times to start. The top
-three is 's Hertogenbosch (00:48), Utrecht Centraal (00:10)
-and Eindhoven (00:27). Rerun the program only for these
-stations and times with a larger beam size, for example:
+After this, look for the time 25:00 in the file
+time-distance to find out the best stations and times to
+start. The top three is 's Hertogenbosch (00:48), Utrecht
+Centraal (00:10) and Eindhoven (00:27). Rerun the program
+with a larger beam size, only for these first stations and
+starting times, for example:
 
 ```
    ./findRoutes.py -b 100 -f shertogenbosch -s 00:48 < traintrips.txt
 ```
 
 If even this takes too much time, you can also start from a
-partial route. For example, save the ten first lines of you
+partial route. For example, save the ten first lines of your
 route to a text file (with copy-and-paste) and then run:
 
 ```
@@ -178,13 +179,13 @@ risk that you might miss a train connection will increase.
 Use the option -i to ignore all transfer time restrictions:
 
 ```
-   ./findRoute -i -b 70 -f shertogenbosch -s 00:48 < traintrips.txt
+   ./findRoute -i -b 90 -f shertogenbosch -s 00:48 < traintrips.txt
    ...
    # largest distance : 1995.8
 ```
 
-This how I found the longest distance: 1995.8 km. But it
-contains two transfers of 0 minutes at very busy stations...
+This is how I found the longest route: 1995.8 km. But it
+contains two transfers of 0 minutes at busy train stations...
 
 ## Using this software in another edition
 
