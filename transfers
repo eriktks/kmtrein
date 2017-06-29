@@ -1,12 +1,13 @@
 00:04 amersfoort utrechtcentraal utrechtcentraal arnhem
 00:04 amersfoort utrechtcentraal utrechtcentraal shertogenbosch
 00:03 amsterdamcentraal amersfoort amersfoort zwolle
-00:04 amsterdamcentraal rotterdamcentraal rotterdamcentraal utrechtcentraal
+00:04 amsterdamcentraal rotterdamcentraal rotterdamcentraal gouda
 00:04 arnhem utrechtcentraal utrechtcentraal amersfoort
-00:04 arnhem utrechtcentraal utrechtcentraal arnhem
 00:04 arnhem utrechtcentraal utrechtcentraal shertogenbosch
-00:04 breda rotterdamcentraal rotterdamcentraal utrechtcentraal
-00:04 dordrecht rotterdamcentraal rotterdamcentraal utrechtcentraal
+00:04 breda rotterdamcentraal rotterdamcentraal gouda
+00:04 dordrecht rotterdamcentraal rotterdamcentraal gouda
+00:04 gouda rotterdamcentraal rotterdamcentraal amsterdamcentraal
+00:04 gouda rotterdamcentraal rotterdamcentraal breda
 00:04 shertogenbosch utrechtcentraal utrechtcentraal amsterdamcentraal 02:16
 00:04 shertogenbosch utrechtcentraal utrechtcentraal amersfoort
 00:04 shertogenbosch utrechtcentraal utrechtcentraal arnhem
@@ -14,7 +15,6 @@
 00:03 nijmegen shertogenbosch shertogenbosch utrechtcentraal
 00:04 utrechtcentraal amsterdamcentraal amsterdamcentraal almerecentrum
 00:04 utrechtcentraal amsterdamcentraal amsterdamcentraal amersfoort
-00:04 utrechtcentraal rotterdamcentraal rotterdamcentraal amsterdamcentraal
 00:03 utrechtcentraal arnhem arnhem nijmegen 10:35
 00:03 utrechtcentraal arnhem arnhem nijmegen 11:35
 00:03 utrechtcentraal arnhem arnhem nijmegen 12:35
@@ -28,5 +28,4 @@
 00:03 utrechtcentraal arnhem arnhem nijmegen 20:35
 00:03 utrechtcentraal arnhem arnhem nijmegen 21:35
 00:03 utrechtcentraal shertogenbosch shertogenbosch nijmegen
-00:04 utrechtcentraal rotterdamcentraal rotterdamcentraal breda
 00:03 zwolle amersfoort amersfoort amsterdamcentraal
