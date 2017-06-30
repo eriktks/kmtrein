@@ -291,14 +291,15 @@ def findRoute(index,route,travelled,distance):
     global maxDistance,maxTime,timeDistance
 
     if distance > 0:
-        if distance >= maxDistance: 
-            maxDistance = distance
-            printRoute(route)
-            print "# largest distance : %0.1f" % (maxDistance)
         keyTD = route[0]["startStation"]+" "+route[0]["startTime"]+" "+route[-1]["endTime"]
         if keyTD not in timeDistance or timeDistance[keyTD] < distance:
             timeDistance[keyTD] = distance
             fillTimeDistance(route[0]["startStation"],route[0]["startTime"],route[-1]["endTime"],distance)
+            route[-1]["lessThanBest"] = 0.0
+        if distance >= maxDistance: 
+            maxDistance = distance
+            printRoute(route)
+            print "# largest distance : %0.1f" % (maxDistance)
     # start of route: check all stations at start time
     if len(route) == 0:
         for key in index:
