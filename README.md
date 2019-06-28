@@ -1,11 +1,11 @@
 # kmtrein
 
 This is a Python script written by Erik Tjong Kim Sang for
-his participation in the 2017 competition
-[kmtrein](http://www.treinreiziger.nl/inschrijving-kilometer-kampioen-2017-gestart/).
-The object of the competition was to cover as many
-kilometers by train traveling in The Netherlands on Saturday
-24 June 2017. The script computes the longest possible
+his participation in the 2017 and 2019 competitions
+[kmtrein](https://www.kilometerkampioen.nl/).
+The object of the competitions was to cover as many
+kilometers by train traveling in The Netherlands on a single day.
+The script computes the longest possible
 route, given the train schedule for intercity trains and a
 certain conditions.
 
@@ -43,7 +43,7 @@ Groningen so we tell that to the program: our first station is
 Groningen (-f groningen) and we are looking for a new route (-n):
 
 ```
-./findRoutes.py -n -f groningen < traintrips.txt
+./findRoute.py -n -f groningen < traintrips.txt
 ```
 
 The program prefers all station names to be written in lower
@@ -92,7 +92,7 @@ will take to finish! Lets try a beam size of 40 by using the
 option -b:
 
 ```
-./findRoutes.py -b 40 -f groningen < traintrips.txt
+./findRoute.py -b 40 -f groningen < traintrips.txt
 ...
 # largest distance : 1925.2
 ```
@@ -112,13 +112,13 @@ test all possible first stations, then set the beam size at
 zero first:
 
 ```
-   ./findRoutes.py -n -b 0 < traintrips.txt
+   ./findRoute.py -n -b 0 < traintrips.txt
 ```
 
 Then run the program with beam size 10:
 
 ```
-   ./findRoutes.py -b 10 < traintrips.txt
+   ./findRoute.py -b 10 < traintrips.txt
 ```
 
 Note that this time we continue search for a route so we do
@@ -133,7 +133,7 @@ with a larger beam size, only for these first stations and
 starting times, for example:
 
 ```
-   ./findRoutes.py -b 100 -f shertogenbosch -s 00:48 < traintrips.txt
+   ./findRoute.py -b 100 -f shertogenbosch -s 00:48 < traintrips.txt
 ```
 
 If even this takes too much time, you can also start from a
@@ -141,7 +141,7 @@ partial route. For example, save the ten first lines of your
 route to a text file (with copy-and-paste) and then run:
 
 ```
-   ./findRoutes.py -b 100 -H myfile.txt < traintrips.txt
+   ./findRoute.py -b 100 -H myfile.txt < traintrips.txt
 ```
 
 The program will then look for a route that starts with the
@@ -184,7 +184,7 @@ Use the option -i to ignore all transfer time restrictions:
    # largest distance : 1995.8
 ```
 
-This is how I found the longest route: 1995.8 km. But it
+This is how I found the longest route for 2017: 1995.8 km. But it
 contains two transfers of 0 minutes at busy train stations...
 
 ## Using this software in another edition
@@ -193,7 +193,7 @@ If you want to use this software for another edition of this
 competition you will need to update train schedule stored in
 the file *traintrips.txt*. I obtained the train schedule
 from the website
-[rijdendetreinen.nl](https://www.rijdendetreinen.nl/reisplanner),
+[ns.nl](https://www.ns.nl/reisplanner),
 by copy-and-paste.  The track lengths were found on
 [wiskunde123.nl](http://www.wiskunde123.nl/treingraaf/).
 

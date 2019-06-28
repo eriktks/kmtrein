@@ -3,7 +3,9 @@ almerecentrum amsterdamcentraal almerecentrum schipholairport 15.1
 almerecentrum amsterdamcentraal almerecentrum almeremuziekwijk 2.0
 almerecentrum schipholairport almerecentrum almeremuziekwijk 2.0
 amersfoort amsterdamcentraal amersfoort schipholairport 31.5
-amsterdamcentraal alkmaar amsterdamcentraal rotterdamcentraal 5.0
+amsterdamcentraal alkmaar amsterdamcentraal haarlem 5.0
+amsterdamcentraal alkmaar amsterdamcentraal schipholairport 5.0
+amsterdamcentraal haarlem amsterdamcentraal schipholairport 5.0
 amsterdamcentraal almerecentrum amsterdamcentraal amersfoort 13.4
 amsterdamcentraal almerecentrum amsterdamcentraal utrechtcentraal 3.6
 amsterdamcentraal amersfoort amsterdamcentraal utrechtcentraal 3.6
@@ -14,5 +16,8 @@ utrechtcentraal arnhem utrechtcentraal shertogenbosch 1.5
 utrechtcentraal leidencentraal utrechtcentraal gouda 15.9
 rotterdamcentraal breda rotterdamcentraal dordrecht 7.2
 schipholairport almerecentrum schipholairport amersfoort 22.1
-zwolle groningen zwolle leeuwarden 27.7
-zwolle assen zwolle leeuwarden 27.7
+dordrecht arnhem arnhem nijmegen 10.3
+veendam groningen groningen winschoten 21.6
+roodeschool groningen groningen delfzijl 11.0
+zutphen arnhem arnhem winterswijk 1.9
+rotterdamcentraal schipholairport schipholairport leidencentraal 4.6

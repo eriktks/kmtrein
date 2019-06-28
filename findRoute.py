@@ -1,7 +1,7 @@
 #!/usr/bin/python -W all
 """
-   findRoutes.py: find longest route with an index of the available train rides
-   usage: findRoutes.py [-b beam-size] [-f firstStation] [-h] [-H history-file] [-i] [-n] [-s time] [-S] < traintrips.txt
+   findRoute.py: find longest route with an index of the available train rides
+   usage: findRoute.py [-b beam-size] [-f firstStation] [-h] [-H history-file] [-i] [-n] [-s time] [-S] < traintrips.txt
    note: expected input line formats: 
    1. hash sign distance start-station end-station
    2. (often on 4 separate lines) start-time end-time transfers travel-time
@@ -23,21 +23,21 @@ import sys
 
 # constants
 COMMAND = sys.argv.pop(0)
-DAYTIME = "24:00" # length of competition
-MAXWAIT = "00:59" # do not stay at any station longer than this
-TIMEZERO = "00:00"
-MINRETURNWAITINGTIME = "00:03" # need at least 3 minutes to catch train back
+TIMEZERO = "06:00" # start time of competition
+DAYTIME = "18:00" # duration of competition
+MAXWAIT = "00:29" # do not stay at any station longer than this
+MINRETURNWAITINGTIME = "00:02" # need at least 2 minutes to catch train back
 CENTERNAME = "utrechtcentraal" # visit this station...
-CENTERSTARTTIME = "10:00" # between this time and...
-CENTERENDTIME = "14:00" # this time and...
+CENTERSTARTTIME = "11:00" # between this time and...
+CENTERENDTIME = "15:00" # this time and...
 CENTERWAITTIME = "00:05" # stay there at least this many minutes
-MAXTIMERESERVE = "00:01" # number of last minute(s) of 24 hours as reserve
+MAXTIMERESERVE = "00:00" # number of last minute(s) of 24 hours as reserve
 MINUTESPERHOUR = 60.0
 PARTNERFILE="partners" # tracks with overlapping parts
 STATIONSFILE="stations" # list of station names
 TRANSFERSFILE="transfers" # minimum required time per transfer
 TIMEDISTANCEFILE = "time-distance" # best distance covered per time of earlier runs
-HELP="""usage: findRoutes.py [-b beam-size] [-f firstStation] [-h] [-H history-file] [-i] [-n] [-s time] [-S] < traintrips.txt
+HELP="""usage: findRoute.py [-b beam-size] [-f firstStation] [-h] [-H history-file] [-i] [-n] [-s time] [-S] < traintrips.txt
 -b: beam size
 -f: first station: start all routes here
 -h: show help message and exit
@@ -66,8 +66,12 @@ maxDistance = 0
 timeDistance = {}
 
 def help():
-    print HELP
+    print(HELP)
     sys.exit()
+
+def reverseTrack(track):
+    startStation,endStation = track.split()
+    return(endStation+" "+startStation)
 
 def readStations():
     try: inFile = open(STATIONSFILE,"r")
@@ -268,12 +272,11 @@ def centerVisited(route):
 
 def printRoute(route):
     for trainTrip in route:
-        if trainTrip["distance"] != 0.0:
-            print "%s %s %s %0.1f %0.1f %d %s %s" % (trainTrip["startTime"],trainTrip["endTime"],trainTrip["waitingTime"],trainTrip["distance"],trainTrip["lessThanBest"],int(trainTrip["averageSpeed"]),trainTrip["startStation"],trainTrip["endStation"])
+        print("%s %s %s %0.1f %0.1f %d %s %s" % (trainTrip["startTime"],trainTrip["endTime"],trainTrip["waitingTime"],trainTrip["distance"],trainTrip["lessThanBest"],int(trainTrip["averageSpeed"]),trainTrip["startStation"],trainTrip["endStation"]))
 
 # compute the maximum (end) time for a given start time
 def computeMaxTime(startTime):
-    minutes = time2minutes(startTime)+time2minutes("24:00")
+    minutes = time2minutes(startTime)+time2minutes(DAYTIME)
     if not ignoreTransferSafetyTimes: minutes -= time2minutes(MAXTIMERESERVE)
     return(minutes2time(minutes))
 
@@ -299,7 +302,7 @@ def findRoute(index,route,travelled,distance):
         if distance >= maxDistance: 
             maxDistance = distance
             printRoute(route)
-            print "# largest distance : %0.1f" % (maxDistance)
+            print("# largest distance : %0.1f" % (maxDistance))
     # start of route: check all stations at start time
     if len(route) == 0:
         for key in index:
@@ -317,7 +320,9 @@ def findRoute(index,route,travelled,distance):
                             averageSpeed = index[key][startStation][endStation][i]["averageSpeed"]
                             waitingTime = minutes2time(time2minutes(startTime)-time2minutes("00:00"))
                             maxTime = computeMaxTime(startTime)
-                            findRoute(index,[{"startStation":startStation,"endStation":endStation,"startTime":startTime,"endTime":endTime,"distance":distance,"averageSpeed":averageSpeed,"waitingTime":waitingTime,"lessThanBest":0.0}],{startStation+" "+endStation:True},distance)
+                            track = startStation+" "+endStation
+                            travelled = {track:True,reverseTrack(track):True}
+                            findRoute(index,[{"startStation":startStation,"endStation":endStation,"startTime":startTime,"endTime":endTime,"distance":distance,"averageSpeed":averageSpeed,"waitingTime":waitingTime,"lessThanBest":0.0}],travelled,distance)
                     # store new time-distance data for this start station
                     writeTimeDistance(timeDistance)
     # continue a route
@@ -329,21 +334,25 @@ def findRoute(index,route,travelled,distance):
         for endStation in index[key][prevStartStation]:
             track = startStation+" "+endStation
             endTime = index[key][prevStartStation][endStation][0]["endTime"]
-            if track not in travelled and endTime <= maxTime:
+            if endTime <= maxTime:
+                repeatedTrack = track in travelled
                 startTime = index[key][prevStartStation][endStation][0]["startTime"]
                 if len(route) == 1 and route[-1]["distance"] == 0.0:
                     maxTime = computeMaxTime(startTime)
                 waitingTime = minutes2time(time2minutes(startTime)-time2minutes(route[-1]["endTime"]))
                 if endStation != route[-1]["startStation"] or waitingTime >= MINRETURNWAITINGTIME or ignoreTransferSafetyTimes:
                     # add track
-                    travelled[track] = True
                     lastTrackPair = route[-1]["startStation"]+" "+route[-1]["endStation"]+" "+track
                     lastTrackPairEndTime = lastTrackPair+" "+time
-                    thisDistance = index[key][prevStartStation][endStation][0]["distance"]
-                    if track in partners:
-                        for i in range(0,len(partners[track])):
-                            if partners[track][i]["partner"] in travelled:
-                                thisDistance -= partners[track][i]["distance"]
+                    thisDistance = 0.0
+                    if not repeatedTrack:
+                        travelled[track] = True
+                        travelled[reverseTrack(track)] = True
+                        thisDistance = index[key][prevStartStation][endStation][0]["distance"]
+                        if track in partners:
+                            for i in range(0,len(partners[track])):
+                                if partners[track][i]["partner"] in travelled:
+                                    thisDistance -= partners[track][i]["distance"]
                     distance += thisDistance
                     averageSpeed = index[key][prevStartStation][endStation][0]["averageSpeed"]
                     keyTD = route[0]["startStation"]+" "+route[0]["startTime"]+" "+endTime
@@ -356,8 +365,10 @@ def findRoute(index,route,travelled,distance):
                        (not lastTrackPairEndTime in transfers or waitingTime >= transfers[lastTrackPairEndTime] or ignoreTransferSafetyTimes):
                         findRoute(index,route,travelled,distance)
                     # delete track
-                    del travelled[track]
-                    distance -= thisDistance
+                    if not repeatedTrack:
+                        del travelled[track]
+                        del travelled[reverseTrack(track)]
+                        distance -= thisDistance
                     route.pop(-1)
 
 def readRoute(fileName):
@@ -393,6 +404,7 @@ def readRoute(fileName):
                 sys.exit(COMMAND+": unknown station in file "+fileName+" : "+station+"\n")
         track = startStation+" "+endStation
         travelled[track] = True
+        travelled[reverseTrack(track)] = True
         route.append({"startStation":startStation,"endStation":endStation,"startTime":startTime,"endTime":endTime,"distance":distance,"waitingTime":waitingTime,"averageSpeed":averageSpeed,"lessThanBest":lessThanBest})
     inFile.close()
     return({"travelled":travelled, "route":route, "distance":totalDistance})
@@ -408,7 +420,7 @@ def showSpeeds(index):
                 speeds[key2][int(index[key1][prevStartStation][endStation][0]["averageSpeed"])] = True
     for key2 in speeds:
         for speed in sorted(speeds[key2],reverse=True): sys.stdout.write(str(speed)+" ")
-        print key2
+        print(key2)
 
 # read track pairs that share a section
 def readPartners():
@@ -437,41 +449,45 @@ def readPartners():
     inFile.close()
     return(partners)
 
-stations = readStations()
-options,args = getopt.getopt(sys.argv,"b:f:hH:ins:S")
-if len(args) > 0: sys.exit(COMMAND+": unexpected extra argument: "+args[0])
-for option,value in options:
-    if option == "-b": beamSize = float(value)
-    elif option == "-f": firstStation = value
-    elif option == "-h": help()
-    elif option == "-H": historyFile = value
-    elif option == "-i": 
-       ignoreTransferSafetyTimes = True
-    elif option == "-n": resetBestDistances = True
-    elif option == "-s": globalStartTime = value
-    elif option == "-S": doShowSpeeds = True
-if firstStation != "" and not firstStation in stations:
-    sys.exit(COMMAND+": unknown first station: "+firstStation+"\n")
-patternTime = re.compile("^\d\d:\d\d$")
-if not patternTime.match(globalStartTime):
-    sys.exit(COMMAND+": unexpected start time argument value for -s: "+globalStartTime+"\n")
+def main(argv):
+    global beamSize,doShowSpeeds,firstStation,globalStartTime,historyFile,ignoreTransferSafetyTimes,resetBestDistances
+    global index,partners,stations,transfers,trainTrips,maxDistance,timeDistance,maxTime
 
-maxTime = computeMaxTime(globalStartTime) # needs function to be computed
-if not resetBestDistances: timeDistance = readTimeDistance()
-trainTrips = readTrainTrips()
-transfers = readTransfers()
-index = makeIndex(trainTrips,transfers)
-partners = readPartners()
-if doShowSpeeds: 
-    showSpeeds(index)
-    sys.exit()
-   
-if historyFile == "": 
-    findRoute(index,[],{},0)
-else:
-    readRouteResults = readRoute(historyFile)
-    findRoute(index,readRouteResults["route"],readRouteResults["travelled"],readRouteResults["distance"])
-writeTimeDistance(timeDistance)
+    stations = readStations()
+    options,args = getopt.getopt(argv,"b:f:hH:ins:S")
+    if len(args) > 0: sys.exit(COMMAND+": unexpected extra argument: "+args[0])
+    for option,value in options:
+        if option == "-b": beamSize = float(value)
+        elif option == "-f": firstStation = value
+        elif option == "-h": help()
+        elif option == "-H": historyFile = value
+        elif option == "-i": 
+           ignoreTransferSafetyTimes = True
+        elif option == "-n": resetBestDistances = True
+        elif option == "-s": globalStartTime = value
+        elif option == "-S": doShowSpeeds = True
+    if firstStation != "" and not firstStation in stations:
+        sys.exit(COMMAND+": unknown first station: "+firstStation+"\n")
+    patternTime = re.compile("^\d\d:\d\d$")
+    if not patternTime.match(globalStartTime):
+        sys.exit(COMMAND+": unexpected start time argument value for -s: "+globalStartTime+"\n")
+    
+    maxTime = computeMaxTime(globalStartTime) # needs function to be computed
+    if not resetBestDistances: timeDistance = readTimeDistance()
+    trainTrips = readTrainTrips()
+    transfers = readTransfers()
+    index = makeIndex(trainTrips,transfers)
+    partners = readPartners()
+    if doShowSpeeds: 
+        showSpeeds(index)
+        sys.exit()
+       
+    if historyFile == "": 
+        findRoute(index,[],{},0)
+    else:
+        readRouteResults = readRoute(historyFile)
+        findRoute(index,readRouteResults["route"],readRouteResults["travelled"],readRouteResults["distance"])
+    writeTimeDistance(timeDistance)
 
-# done
-sys.exit()
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
