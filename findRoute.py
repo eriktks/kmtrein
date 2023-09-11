@@ -23,11 +23,11 @@ import sys
 
 # constants
 COMMAND = sys.argv.pop(0)
-TIMEZERO = "06:00" # start time of competition
-DAYTIME = "18:00" # duration of competition
+TIMEZERO = "00:00" # start time of competition
+DAYTIME = "24:00" # duration of competition
 MAXWAIT = "00:29" # do not stay at any station longer than this
 MINRETURNWAITINGTIME = "00:02" # need at least 2 minutes to catch train back
-CENTERNAME = "utrechtcentraal" # visit this station...
+CENTERNAME = "zwolle" # visit this station...
 CENTERSTARTTIME = "11:00" # between this time and...
 CENTERENDTIME = "15:00" # this time and...
 CENTERWAITTIME = "00:05" # stay there at least this many minutes
