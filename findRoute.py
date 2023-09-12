@@ -1,4 +1,4 @@
-#!/usr/bin/python -W all
+#!/usr/bin/env python3
 """
    findRoute.py: find longest route with an index of the available train rides
    usage: findRoute.py [-b beam-size] [-f firstStation] [-h] [-H history-file] [-i] [-n] [-s time] [-S] < traintrips.txt
