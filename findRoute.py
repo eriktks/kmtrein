@@ -25,8 +25,9 @@ import sys
 COMMAND = sys.argv.pop(0)
 TIMEZERO = "00:00" # start time of competition
 DAYTIME = "24:00" # duration of competition
-MAXWAIT = "00:29" # do not stay at any station longer than this
+MAXWAIT = "02:00" # do not stay at any station longer than this
 MINRETURNWAITINGTIME = "00:02" # need at least 2 minutes to catch train back
+CANTRAVELBACK = "can_travel_back" # stations that can be visited in 2 directions
 CENTERNAME = "zwolle" # visit this station...
 CENTERSTARTTIME = "11:00" # between this time and...
 CENTERENDTIME = "15:00" # this time and...
@@ -58,6 +59,7 @@ resetBestDistances = False
 ignoreTransferSafetyTimes = False
 # internal variables
 index = {}
+can_travel_back = {}
 partners = {}
 stations = {}
 transfers = {}
@@ -321,7 +323,10 @@ def findRoute(index,route,travelled,distance):
                             waitingTime = minutes2time(time2minutes(startTime)-time2minutes("00:00"))
                             maxTime = computeMaxTime(startTime)
                             track = startStation+" "+endStation
-                            travelled = {track:True,reverseTrack(track):True}
+                            if track in can_travel_back:
+                                travelled = {track:True}
+                            else:
+                                travelled = {track:True,reverseTrack(track):True}
                             findRoute(index,[{"startStation":startStation,"endStation":endStation,"startTime":startTime,"endTime":endTime,"distance":distance,"averageSpeed":averageSpeed,"waitingTime":waitingTime,"lessThanBest":0.0}],travelled,distance)
                     # store new time-distance data for this start station
                     writeTimeDistance(timeDistance)
@@ -341,35 +346,39 @@ def findRoute(index,route,travelled,distance):
                     maxTime = computeMaxTime(startTime)
                 waitingTime = minutes2time(time2minutes(startTime)-time2minutes(route[-1]["endTime"]))
                 if endStation != route[-1]["startStation"] or waitingTime >= MINRETURNWAITINGTIME or ignoreTransferSafetyTimes:
-                    # add track
-                    lastTrackPair = route[-1]["startStation"]+" "+route[-1]["endStation"]+" "+track
-                    lastTrackPairEndTime = lastTrackPair+" "+time
                     thisDistance = 0.0
                     if not repeatedTrack:
-                        travelled[track] = True
-                        travelled[reverseTrack(track)] = True
                         thisDistance = index[key][prevStartStation][endStation][0]["distance"]
                         if track in partners:
                             for i in range(0,len(partners[track])):
                                 if partners[track][i]["partner"] in travelled:
                                     thisDistance -= partners[track][i]["distance"]
-                    distance += thisDistance
-                    averageSpeed = index[key][prevStartStation][endStation][0]["averageSpeed"]
-                    keyTD = route[0]["startStation"]+" "+route[0]["startTime"]+" "+endTime
-                    lessThanBest = 0.0
-                    if keyTD in timeDistance: lessThanBest = timeDistance[keyTD]-distance
-                    route.append({"startStation":startStation,"endStation":endStation,"startTime":startTime,"endTime":endTime,"distance":thisDistance,"averageSpeed":averageSpeed,"waitingTime":waitingTime,"lessThanBest":lessThanBest})
-                    # continue search
-                    if centerVisited(route) and lessThanBest <= beamSize and \
-                       (not lastTrackPair in transfers or waitingTime >= transfers[lastTrackPair] or ignoreTransferSafetyTimes) and \
-                       (not lastTrackPairEndTime in transfers or waitingTime >= transfers[lastTrackPairEndTime] or ignoreTransferSafetyTimes):
-                        findRoute(index,route,travelled,distance)
-                    # delete track
-                    if not repeatedTrack:
-                        del travelled[track]
-                        del travelled[reverseTrack(track)]
-                        distance -= thisDistance
-                    route.pop(-1)
+                    if thisDistance > 0 or route[-1]["distance"] > 0:
+                        # add track
+                        if not repeatedTrack:
+                            travelled[track] = True
+                            if track not in can_travel_back:
+                                travelled[reverseTrack(track)] = True
+                        lastTrackPair = route[-1]["startStation"]+" "+route[-1]["endStation"]+" "+track
+                        lastTrackPairEndTime = lastTrackPair+" "+time
+                        distance += thisDistance
+                        averageSpeed = index[key][prevStartStation][endStation][0]["averageSpeed"]
+                        keyTD = route[0]["startStation"]+" "+route[0]["startTime"]+" "+endTime
+                        lessThanBest = 0.0
+                        if keyTD in timeDistance: lessThanBest = timeDistance[keyTD]-distance
+                        route.append({"startStation":startStation,"endStation":endStation,"startTime":startTime,"endTime":endTime,"distance":thisDistance,"averageSpeed":averageSpeed,"waitingTime":waitingTime,"lessThanBest":lessThanBest})
+                        # continue search
+                        if centerVisited(route) and lessThanBest <= beamSize and \
+                           (not lastTrackPair in transfers or waitingTime >= transfers[lastTrackPair] or ignoreTransferSafetyTimes) and \
+                           (not lastTrackPairEndTime in transfers or waitingTime >= transfers[lastTrackPairEndTime] or ignoreTransferSafetyTimes):
+                            findRoute(index,route,travelled,distance)
+                        # delete track
+                        if not repeatedTrack:
+                            del travelled[track]
+                            if track not in can_travel_back:
+                                del travelled[reverseTrack(track)]
+                            distance -= thisDistance
+                        route.pop(-1)
 
 def readRoute(fileName):
     global maxTime
@@ -404,7 +413,8 @@ def readRoute(fileName):
                 sys.exit(COMMAND+": unknown station in file "+fileName+" : "+station+"\n")
         track = startStation+" "+endStation
         travelled[track] = True
-        travelled[reverseTrack(track)] = True
+        if track not in can_travel_back:
+            travelled[reverseTrack(track)] = True
         route.append({"startStation":startStation,"endStation":endStation,"startTime":startTime,"endTime":endTime,"distance":distance,"waitingTime":waitingTime,"averageSpeed":averageSpeed,"lessThanBest":lessThanBest})
     inFile.close()
     return({"travelled":travelled, "route":route, "distance":totalDistance})
@@ -422,12 +432,31 @@ def showSpeeds(index):
         for speed in sorted(speeds[key2],reverse=True): sys.stdout.write(str(speed)+" ")
         print(key2)
 
+
+# read pair of stations that be travelled in two directions
+def read_can_travel_back():
+    can_travel_back = {}
+    try: in_file = open(CANTRAVELBACK,"r")
+    except: sys.exit(COMMAND+": cannot read file "+CANTRAVELBACK+"\n")
+    for line in in_file:
+        line = line.strip()
+        station_1, station_2 = line.strip().split()
+        if not station_1 in stations:
+            sys.exit(COMMAND+": unknown station in file "+CANTRAVELBACK+": "+station_1+"\n")
+        if not station_2 in stations:
+            sys.exit(COMMAND+": unknown station in file "+CANTRAVELBACK+": "+station_2+"\n")
+        can_travel_back[f"{station_1} {station_2}"] = True
+        can_travel_back[f"{station_2} {station_1}"] = True
+    in_file.close()
+    return can_travel_back
+
+
 # read track pairs that share a section
 def readPartners():
     partners = {}
     patternHashStart = re.compile("^#")
     try: inFile = open(PARTNERFILE,"r")
-    except: sys.exit(COMMAND+": cannot read file "+PARTNETFILE+"\n")
+    except: sys.exit(COMMAND+": cannot read file "+PARTNERFILE+"\n")
     for line in inFile:
         line = line.rstrip()
         if patternHashStart.match(line): continue
@@ -478,6 +507,7 @@ def main(argv):
     transfers = readTransfers()
     index = makeIndex(trainTrips,transfers)
     partners = readPartners()
+    can_travel_back = read_can_travel_back()
     if doShowSpeeds: 
         showSpeeds(index)
         sys.exit()
