@@ -13,14 +13,22 @@ def add_day(day_time):
     return f"{hours}:{minutes}"
 
 next_day_started = False
-for line in sys.stdin:
+lines = sys.stdin.readlines()
+for i in range(0, len(lines)):
+    line = lines[i]
     line = re.sub("^Alternatief\s+vervoer\s+", "", line)
     line = re.sub("^Werkzaamheden\s+", "", line)
     line = line.strip()
     if re.search("^vertrek\s", line):
-        line += sys.stdin.readline().strip()
-        line += sys.stdin.readline().strip()
-        line += sys.stdin.readline().strip()
+        if i < len(lines) - 1 and not re.search("vertrek", lines[i+1]):
+            line += lines[i+1].strip()
+            i += 1
+        if i < len(lines) - 1 and not re.search("vertrek", lines[i+1]):
+            line += lines[i+1].strip()
+            i += 1
+        if i < len(lines) - 1 and not re.search("vertrek", lines[i+1]):
+            line += lines[i+1].strip()
+            i += 1
         if not re.search('\+', line):
             line_parts = line.split()
             start_time = line_parts[1]
