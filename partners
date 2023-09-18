@@ -4,12 +4,11 @@ amsterdamcentraal almerecentrum amsterdamcentraal utrechtcentraal 3.6
 amsterdamcentraal breukelen amsterdamcentraal weesp 3.6
 amsterdamcentraal hilversum amsterdamcentraal utrechtcentraal 3.6
 amsterdamzuid almerecentrum amsterdamzuid hilversum 12.9
+rotterdamcentraal breda rotterdamcentraal dordrecht 7.2
 breda rotterdamcentraal breda dordrecht 4.8
-dordrecht breda dordrecht roosendaal 14.3
 eindhoven shertogenbosch eindhoven tilburg 19.9
 utrechtcentraal edewageningen utrechtcentraal shertogenbosch 1.5
 utrechtcentraal leidencentraal utrechtcentraal gouda 15.9
-rotterdamcentraal breda rotterdamcentraal dordrecht 7.2
 tiel arnhem arnhemzuid nijmegen 4.3
 tiel arnhem arnhem arnhemzuid 6.0
 veendam groningen groningen winschoten 21.6
@@ -18,5 +17,9 @@ zutphen arnhem arnhem winterswijk 1.9
 rotterdamcentraal schipholairport schipholairport leidencentraal 4.6
 utrechtcentraal amsterdamcentraal utrechtcentraal amsterdamzuid 30.7
 leeuwarden zwolle zwolle groningen 27.7
-akkrum zwolle zwolle beilen 27.7
 zwolle almelo almelo deventer 4.6
+utrechtlunetten geldermalsen geldermalsen utrechtcentraal 22.5
+utrechtlunetten geldermalsen shertogenbosch utrechtcentraal 22.5
+utrechtcentraal shertogenbosch shertogenbosch geldermalsen 22.1
+zwolle groningen groningen meppel 77.2
+zwolle leeuwarden leeuwarden meppel 66.5

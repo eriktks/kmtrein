@@ -35,12 +35,11 @@
 00:02 edewageningen utrechtcentraal utrechtcentraal shertogenbosch
 00:02 nijmegen shertogenbosch shertogenbosch utrechtcentraal
 00:02 utrechtcentraal shertogenbosch shertogenbosch nijmegen
+00:02 utrechtcentraal shertogenbosch shertogenbosch eindhoven
 00:02 utrechtcentraal amsterdamcentraal amsterdamcentraal almerecentrum
 00:02 almerecentrum amsterdamcentraal amsterdamcentraal utrechtcentraal
 00:02 utrechtcentraal amsterdamcentraal amsterdamcentraal amersfoort
 00:02 amersfoort amsterdamcentraal amsterdamcentraal utrechtcentraal
-00:02 utrechtcentraal shertogenbosch shertogenbosch nijmegen
-00:02 nijmegen shertogenbosch shertogenbosch utrechtcentraal
 00:02 zwolle amersfoort amersfoort amsterdamcentraal
 00:02 amsterdamcentraal amersfoort amersfoort zwolle
 00:02 zwolle leeuwarden leeuwarden groningen
@@ -86,3 +85,7 @@
 00:02 amersfoort utrechtcentraal utrechtcentraal geldermalsen
 00:02 leeuwarden groningen groningen beilen
 00:02 beilen groningen groningen leeuwarden
+00:02 akkrum meppel meppel beilen
+00:02 veendam kropswolde kropswolde groningen
+00:02 groningen kropswolde kropswolde veendam
+00:01 zwolle coevorden coevorden zwolle

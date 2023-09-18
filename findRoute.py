@@ -24,9 +24,9 @@ import sys
 # constants
 COMMAND = sys.argv.pop(0)
 TIMEZERO = "00:00" # start time of competition
-DAYTIME = "24:00" # duration of competition
+DAYTIME = "23:59" # duration of competition
 MAXWAIT = "02:00" # do not stay at any station longer than this
-MINRETURNWAITINGTIME = "00:02" # need at least 2 minutes to catch train back
+MINRETURNWAITINGTIME = "00:01" # need at least 2 minutes to catch train back
 CANTRAVELBACK = "can_travel_back" # stations that can be visited in 2 directions
 CENTERNAME = "zwolle" # visit this station...
 CENTERSTARTTIME = "11:00" # between this time and...
@@ -336,6 +336,8 @@ def findRoute(index,route,travelled,distance):
         startStation = route[-1]["endStation"]
         time = route[-1]["endTime"]
         key = startStation+" "+time
+        if prevStartStation not in index[key]:
+            sys.exit(f"error in traintrips.txt! ({prevStart})")
         for endStation in index[key][prevStartStation]:
             track = startStation+" "+endStation
             endTime = index[key][prevStartStation][endStation][0]["endTime"]
@@ -480,7 +482,7 @@ def readPartners():
 
 def main(argv):
     global beamSize,doShowSpeeds,firstStation,globalStartTime,historyFile,ignoreTransferSafetyTimes,resetBestDistances
-    global index,partners,stations,transfers,trainTrips,maxDistance,timeDistance,maxTime
+    global index,partners,stations,transfers,trainTrips,maxDistance,timeDistance,maxTime, can_travel_back
 
     stations = readStations()
     options,args = getopt.getopt(argv,"b:f:hH:ins:S")
