@@ -1,8 +1,8 @@
 # kmtrein
 
 This is a Python script written by Erik Tjong Kim Sang for
-his participation in the 2017 and 2019 competitions
-[kmtrein](https://www.kilometerkampioen.nl/).
+his participation in the 2017, 2019 and 2023 editions of the 
+competition [kmtrein](https://www.kilometerkampioen.nl/).
 The object of the competitions was to cover as many
 kilometers by train traveling in The Netherlands on a single day.
 The script computes the longest possible
@@ -29,6 +29,45 @@ git clone http://github.com/eriktks/kmtrein
 
 This will create a directory kmtrein in the current folder
 where you can find the program and its data files
+
+## Updating the train schedule data
+
+The train schedules are stored in the file [traintrips.txt](traintrips.txt).
+It currently contains the schedule for 16-09-2023, the date
+of the 2023 edition of the competition. The file can be updated
+with any text editor. The rail network is divided in 
+different small tracks. The tracks are stored in the file
+on lines starting with a hash character (#). These lines
+should be kept in future editions. They contain the length of 
+the track, the name of the start station and the name of the 
+end station, for example "# 54.5 groningen leeuwarden".
+
+The rest of the file are blocks of four lines, of which the first
+represents a departure time and the second an arrival time. The third
+and the fourth line are not being used. The time blocks
+should be removed for a next edition and be replaced with the 
+new relevant times:
+
+1. go to the website [ns.nl](https://ns.nl)
+2. enter the departure station and the arrival station in the search fields
+3. enter the relevant date in the search field and the start time of the competition, for example "00:00"
+4. start the search for train trips
+5. change the view style of the page to "No Style", in the browser Firefox: select "View" (top menu), then "Page Style" and then "No Style"
+6. Press the button "Later" until the page contains all the departure times that you need plus those of two hours later
+7. save the web page or copy all the text on a web page and store it in a file
+8. run the program [convert_schedule.py](convert_schedule.py) on this file and store the results in a second file
+9. edit the traintrips.txt file and replace the old travel times by the new times in the second file
+10. manually remove all the blocks of four lines that you do not need: those with departure times before the start of the competition or departure times more than two hours later than the end of the competition
+11. to search for times for other station pairs, you need to put the page back "Basic View Style" mode unless you just want to lookup the times of the reversed route
+
+Note that some of the stations have changed name since 2017, for example "Arnhem" became "Arnhem Centraal". You can change the names in the traintrips.txt file (name convention: only lower case characters, no spaces or hyphens) or keep on using the 2017 station names.
+
+In case you want to check the distances or add new tracks: the distances orginate from the Kilometer Tool at the [competition website](https://www.kilometerkampioen.nl). If you add new track you might want to check if they do not overlap with existing tracks. Information about this is stored in the file [partners](partners).
+
+In the 2023 edition of the competition, slow trains that stop everywhere were counted differently from fast trains. Since Dutch Railways does not make a difference between the two in their train schedules, a trick was needed to make the difference for the program: some tracks on which both train types are running, have been included twice in traintrips.txt: directly for fast trains and with a via station for slow trains. For example, for Groningen-Leeuwarden we have Groningen-Leeuwarden and Groningen-Grijpskerk-Leeuwarden. Since only slow trains stop at Grijpskerk and since Grijpskerk only serves the two cities, Groningen-Grijpskerk-Leeuwarden is guaranteed to be served by a slow train. 
+
+This scheme has only been used for the fastest tracks. Tracks without intermediate stations (like Eindhoven-Weert) and tracks which are served only by slow trains (like Zwolle-Kampen) have been included in the file [can_travel_back](can_travel_back) to indicate that they can be used twice in a route.
+
 
 ## Running the program
 
@@ -58,20 +97,20 @@ The program outputs the different routes that it finds with
 the longest at the bottom:
 
 ```
-22:39 23:07 00:03 43.5 0.0 93 nijmegen shertogenbosch
-23:23 23:51 00:16 46.6 0.0 103 shertogenbosch utrechtcentraal
-# largest distance : 1853.0
+24:55 25:25 00:04 35.7 0.0 71 leeuwarden grijpskerk
+25:25 25:39 00:00 18.8 0.0 80 grijpskerk groningen
+# largest distance : 1733.1
 ```
 
 The bottom line shows the total distance covered by this
 route. The other lines cover the different parts of the
 route. For example, the line above the last line should be
-read like this: *Take the train from 's Hertogenbosch to
-Utrecht Centraal leaving at 23:23 and arriving at 23:51;
-waiting time after your previous train is 16 minutes. Length
-of this train ride is 46.6 km. Distance difference of this
+read like this: *Take the train from Grijpskerk to
+Groningen leaving at 25:25 (01:25) and arriving at 25:39 (01:39);
+the transfer time from your previous train is 0 minutes. The length
+of this train ride is 18.8 km. Distance difference of this
 suggestion with the best suggestion at this time of the day
-is 0.0 km.*
+is 0.0 km, the speed of the train is 80 km per hour.*
 
 ## Finding longer routes
 
@@ -88,21 +127,21 @@ the day.
 If you want the program to find a longer route, you can ask
 it to examine more route by increasing its beam size. But
 beware: the larger the beam size, the more time the program
-will take to finish! Lets try a beam size of 40 by using the
-option -b:
+will take to finish! The default beam size is 20 km. Lets try 
+a beam size of 40 by using the option -b:
 
 ```
 ./findRoute.py -b 40 -f groningen < traintrips.txt
 ...
-# largest distance : 1925.2
+# largest distance : 1733.9
 ```
 
-Excellent, now we get a longer route. Try other beam sizes
+Excellent, now we get a slightly longer route. Try other beam sizes
 and see what you get. You will notice that the program is
 responding more slowly as the beam size increases. But
 hopefully you will be rewarded with longer routes.
 
-## Getting results faster
+## Obtaining results more quickly
 
 There are many possible train routes in The Netherlands and
 it takes a lot of time to check them all, even with a
@@ -115,7 +154,7 @@ zero first:
    ./findRoute.py -n -b 0 < traintrips.txt
 ```
 
-Then run the program with beam size 10:
+Only when this run has finished, run the program with beam size 10:
 
 ```
    ./findRoute.py -b 10 < traintrips.txt
@@ -125,20 +164,24 @@ Note that this time we continue search for a route so we do
 not use option -n here. Next, you run the program with beam
 sizes 20, 30, 40 and so on until it takes too much time.
 
-After this, look for the time 25:00 in the file
+After this, look for the time 26:00 in the file
 time-distance to find out the best stations and times to
-start. The top three is 's Hertogenbosch (00:48), Utrecht
-Centraal (00:10) and Eindhoven (00:27). Rerun the program
-with a larger beam size, only for these first stations and
-starting times, for example:
+start. The top four for beam size 20 in the year 2023 was:
+Meppel (1746.3 km when starting at 00:04),
+Leeuwarden (1742.1/00:55),
+Akkrum (1733.9/00:36) and
+Groningen (1733.0/01:44).
+Rerun the program with a larger beam size, only for these 
+first stations and starting times, for example:
 
 ```
-   ./findRoute.py -b 100 -f shertogenbosch -s 00:48 < traintrips.txt
+   ./findRoute.py -b 40 -f meppel -s 00:31 < traintrips.txt
 ```
 
-If even this takes too much time, you can also start from a
-partial route. For example, save the ten first lines of your
-route to a text file (with copy-and-paste) and then run:
+If this takes too much time, you can also start from a
+partial route. For example, save the ten first lines of a
+proposed route to a text file (with copy-and-paste), for 
+example to "myfile.txt" and then run:
 
 ```
    ./findRoute.py -b 100 -H myfile.txt < traintrips.txt
@@ -155,9 +198,10 @@ Utrecht Centraal from platform 1 to platform 22 in zero
 minutes, which is a bit hard to realize.
 
 You can define minimum transfer times in the file
-*transfers*.  The file contains lines with the format: time
-(in minutes) and the four stations: the station from which you
-left, the transfer station (twice) and the target station.
+[transfers](transfers). The file contains lines with the format: 
+minimum transfervtime (in minutes) and four stations: 
+the station from which you left, the transfer station (twice) and 
+the target station.
 Optionally these are followed by the arrival time at the
 transfer station. So;
 
@@ -169,12 +213,18 @@ means: *when you travel from Amersfoort to Arnhem and have a
 transfer at Utrecht Centraal, allow for a transfer time of
 at least four minutes*
 
-I have used conservative minimum transfer times for
-transfers that included a platform change: four minutes at
-large stations and three minutes at small ones. If you think
-you can manage two-minute changes, you should change the
-file *transfers*. Your reward will be longer routes but the
-risk that you might miss a train connection will increase.
+In the tranfers file distributed here, all transfer times 
+have been set at one minute. If this is too much for you,
+please change the file.
+
+For stations not mentioned in the transfers file, the program
+uses a minimum transfer time of zero minutes. The reason for
+this is that some direct routes have been split in the program
+and therefore some transfers do not require changing trains.
+For example, for Groningen-Grijpskerk-Leeuwarden, the program
+assumes a transfer in Grijpskerk but since you would change
+to the same train from Groningen, the transfer time here is
+of no importance.
 
 Use the option -i to ignore all transfer time restrictions:
 
@@ -183,26 +233,4 @@ Use the option -i to ignore all transfer time restrictions:
    ...
    # largest distance : 1995.8
 ```
-
-This is how I found the longest route for 2017: 1995.8 km. But it
-contains two transfers of 0 minutes at busy train stations...
-
-## Using this software in another edition
-
-If you want to use this software for another edition of this
-competition you will need to update train schedule stored in
-the file *traintrips.txt*. I obtained the train schedule
-from the website
-[ns.nl](https://www.ns.nl/reisplanner),
-by copy-and-paste.  The track lengths were found on
-[wiskunde123.nl](http://www.wiskunde123.nl/treingraaf/).
-
-For other editions you also want to change the file
-*transfers* to your needs (see previous section). You might
-want to update the file *stations*, which currently contains
-only a subset of the intercity stations. Examining the
-*partners* file could also be useful: it contains the railway
-sections which overlap and it is incomplete. The file
-*time-distance* contains the longest distances per time of the
-day and can be left alone.
 

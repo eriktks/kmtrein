@@ -19,7 +19,7 @@ for i in range(0, len(lines)):
     line = re.sub("^Alternatief\s+vervoer\s+", "", line)
     line = re.sub("^Werkzaamheden\s+", "", line)
     line = line.strip()
-    if re.search("^vertrek\s", line):
+    if re.search("^vertrek\s", line) and not re.search("[bB]us", line):
         if i < len(lines) - 1 and not re.search("vertrek", lines[i+1]):
             line += lines[i+1].strip()
             i += 1
